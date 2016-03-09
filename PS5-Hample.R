@@ -13,7 +13,7 @@ setwd("~/Google Drive/Senior Year/Spring 2016/Statistical Programming/Problem Se
 set.seed(12435)
 
 # Keeps inputted strings from being categorized as factors
-options(stringsAsFactors=F)
+options(stringsAsFactors = FALSE)
 
 # Additional packages used
 library(foreign)
@@ -24,7 +24,9 @@ anes <- read.dta("anes_timeseries_2012_stata12.dta")
 
 ### Question 1
 
-## Selecting Variables
+
+## Selecting and Cleaning Variables
+
 # VARIABLE 1 : finance_finnext
 
 # Question posed:
@@ -43,32 +45,40 @@ anes$finance_finnext <- as.factor(ifelse(anes$finance_finnext == "1. Better","Be
 # Question posed:
 # Do you presently have any kind of health insurance?
 
-# Recoding health_insured variable to make it more legible and remove missing responses
-anes$health_insured <- as.factor(ifelse(anes$health_insured == "1. Yes","Yes",
-                                 ifelse(anes$health_insured == "2. No","No",
-                                 NA)))
+# Recoding health_insured variable as a dummy variable after removing missing responses
+anes$health_insured <- as.numeric(ifelse(anes$health_insured == "1. Yes", 1,
+                                  ifelse(anes$health_insured == "2. No", 0,
+                                  NA)))
 
 # VARIABLE 3: relig_import
 
 # Question posed:
 # Do you consider religion to be an IMPORTANT part of your life, or NOT?
 
-# Recoding relig_import variable to make it more legible and remove missing responses
-anes$relig_import <- as.factor(ifelse(anes$relig_import == "1. Important","Important",
-                               ifelse(anes$relig_import == "2. Not important","Not important",
-                               NA)))
+# Recoding relig_import variable as a dummy variable after removing missing responses
+anes$relig_import <- as.numeric(ifelse(anes$relig_import == "1. Important", 1,
+                                ifelse(anes$relig_import == "2. Not important", 0,
+                                NA)))
+
+
+## Splitting Data
+# Separates dataset into training and test halves
+train <- sample(dim(anes)[1], dim(anes)[1] / 2, replace = FALSE)
+training.anes <- anes[train, ]
+test.anes <- anes[-train, ]
+
 
 ## Creating Models
 # Obama's feeling thermometer score as function of personal financial optimism
-model1 <- lm(ft_dpc ~ finance_finnext, anes)
+model1 <- lm(ft_dpc ~ finance_finnext, training.anes)
 model1
 
 # Obama's feeling thermometer score as function of presence of health insurance
-model2 <- lm(ft_dpc ~ health_insured, anes)
+model2 <- lm(ft_dpc ~ health_insured, training.anes)
 model2
 
 # Obama's feeling thermometer score as function of importance of religion
-model3 <- lm(ft_dpc ~ relig_import, anes)
+model3 <- lm(ft_dpc ~ relig_import, training.anes)
 model3
 
 
