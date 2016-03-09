@@ -27,35 +27,41 @@ anes <- read.dta("anes_timeseries_2012_stata12.dta")
 
 ## Selecting and Cleaning Variables
 
-# VARIABLE 1 : finance_finnext
+# DEPENDENT VARIABLE: ft_dpc
+# Description: Feeling Thermometer, Democratic Presidential Candidate
+
+# Replaces negative thermometer ratings with NAs
+anes$ft_dpc <- ifelse(anes$ft_dpc < 0, NA, anes$ft_dpc)
+
+# INDEPENDENT VARIABLE 1 : finance_finnext
 
 # Question posed:
 # Now looking ahead, do you think that a year from now 
 # [you / you and your family living here] will be BETTER OFF financially, 
 # WORSE OFF, or JUST ABOUT THE SAME as now?
 
-# Recoding finance_finnext variable to make it more legible and remove missing responses
+# Recodes finance_finnext variable to make it more legible and replaces misssing responses with NAs
 anes$finance_finnext <- as.factor(ifelse(anes$finance_finnext == "1. Better","Better",
                                   ifelse(anes$finance_finnext == "2. Worse","Worse",
                                   ifelse(anes$finance_finnext == "3. The same", "Same",
                                   NA))))
 
-# VARIABLE 2: health_insured
+# INDEPENDENT VARIABLE 2: health_insured
 
 # Question posed:
 # Do you presently have any kind of health insurance?
 
-# Recoding health_insured variable as a dummy variable after removing missing responses
+# Recodes health_insured variable as a dummy variable and replaces misssing responses with NAs
 anes$health_insured <- as.numeric(ifelse(anes$health_insured == "1. Yes", 1,
                                   ifelse(anes$health_insured == "2. No", 0,
                                   NA)))
 
-# VARIABLE 3: relig_import
+# INDEPENDENT VARIABLE 3: relig_import
 
 # Question posed:
 # Do you consider religion to be an IMPORTANT part of your life, or NOT?
 
-# Recoding relig_import variable as a dummy variable after removing missing responses
+# Recodes relig_import variable as a dummy variable and replaces misssing responses with NAs
 anes$relig_import <- as.numeric(ifelse(anes$relig_import == "1. Important", 1,
                                 ifelse(anes$relig_import == "2. Not important", 0,
                                 NA)))
