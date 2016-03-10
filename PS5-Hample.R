@@ -1,7 +1,7 @@
 ## Jacob Hample
 ## Professor Montgomery
 ## Applied Statistical Programming
-## March 10, 2026
+## March 10, 2016
 
 
 ### Problem Set 5 ###
@@ -173,6 +173,32 @@ model3
 
 ### Question 2
 
+# Predicts each model using the test data and stores the predictions in vectors
+predict1 <- c(as.numeric(predict(model1, data = test.anes)))
+predict2 <- c(as.numeric(predict(model2, data = test.anes)))
+predict3 <- c(as.numeric(predict(model3, data = test.anes)))
+
+# Combines predictions of each model into a data frame
+predictALL <- data.frame(cbind(predict1, predict2, predict3))
+
+# Unfortuantely, since the three vectors that make up predictALL are different lengths,
+# when they are combined, missing values after the conclusion of the shorter vectors 
+# are automatically replaced with the first, then second, then third, etc. values
+# of said vector. This is can cause some problems, so we're going to have to go back and 
+# replace these extra values with NAs.
+
+# Replaces duplicate values in columns 1 & 3 with NAs
+for (i in (length(predict1) + 1):length(predictALL[, 1])) {
+  predictALL[i, 1] <- NA
+}
+
+for (i in (length(predict3) + 1):length(predictALL[, 3])) {
+  predictALL[i, 3] <- NA
+}
+
+
+
+#sapply((length(predict1) + 1):length(predictALL[, 1]), function(i) predictALL[i, 1] <- NA)
 
 
 
