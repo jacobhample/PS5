@@ -312,9 +312,9 @@ FitStatistics <- function(predicted, actual, calcRMSE = FALSE,
     statValues <- cbind(statValues, statMEAPE)
     statNames <- c(statNames, "MEAPE")
   }
-  statValues <- statValues[, -1]
-  colnames(statValues) <- statNames # unfortunately this crashes the code if you only select one statistic
-  rownames(statValues) <- c("Model1", "Model2", "Model3") # unfortunately this crashes the code if you only select one statistic
+  statValues <- data.frame(statValues[, -1])
+  colnames(statValues) <- statNames 
+  rownames(statValues) <- c("Model1", "Model2", "Model3") 
   return(statValues)
 }
 
@@ -326,5 +326,8 @@ FitStatistics <- function(predicted, actual, calcRMSE = FALSE,
 FitStatistics(predictALL, therm.Obama, calcRMSE = TRUE, calcMAD = TRUE, calcRMSLE = TRUE, calcMAPE = TRUE, calcMEAPE = TRUE)
 
 # Runs FitStatistics using RMSE to evaluate the accuracy of the models
-FitStatistics(predictALL, therm.Obama, calcRMSE = TRUE) # crashes
+FitStatistics(predictALL, therm.Obama, calcRMSE = TRUE)
+
+# Judging by the fit statistics, Model1 seems to be the best. Model1 has the lowest
+# fit statistics of all the models, though Model3 is close.
 
