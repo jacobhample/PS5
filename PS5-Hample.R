@@ -174,53 +174,157 @@ model3
 ### Question 2
 
 # Predicts each model using the test data and stores the predictions in vectors
-predict1 <- c(as.numeric(predict(model1, data = test.anes)))
-predict2 <- c(as.numeric(predict(model2, data = test.anes)))
-predict3 <- c(as.numeric(predict(model3, data = test.anes)))
+predict1 <- c(predict(model1, newdata = test.anes))
+predict2 <- c(predict(model2, newdata = test.anes))
+predict3 <- c(predict(model3, newdata = test.anes))
 
 # Combines predictions of each model into a data frame
 predictALL <- data.frame(cbind(predict1, predict2, predict3))
 
-# Unfortuantely, since the three vectors that make up predictALL are different lengths,
-# when they are combined, missing values after the conclusion of the shorter vectors 
-# are automatically replaced with the first, then second, then third, etc. values
-# of said vector. This is can cause some problems, so we're going to have to go back and 
-# replace these extra values with NAs.
+# Creates vector NAvalues with indices of rows with NAs
+NAvalues1 <- which(is.na(predictALL[1]))
+NAvalues2 <- which(is.na(predictALL[2]))
+NAvalues3 <- which(is.na(predictALL[3]))
+NAvalues <- sort(unique(c(NAvalues1, NAvalues2, NAvalues3)))
 
-# Replaces duplicate values in columns 1 & 3 with NAs
-for (i in (length(predict1) + 1):length(predictALL[, 1])) {
-  predictALL[i, 1] <- NA
+# Removes indices with NAs from predictALL
+predictALL <- predictALL[-NAvalues, ]
+
+
+
+### Question 3 & 4
+
+# Creates matrix of actual Obama feeling thermometer values
+therm.Obama <- matrix(test.anes$ft_dpc)
+
+# Removes indices with NAs from therm.Obama
+therm.Obama <- matrix(therm.Obama[-NAvalues, ])
+
+## Fit Statistic Functions
+
+#' RMSE
+#' 
+#' This function evaluates the fit of a model by calculating the Root Mean Squared Error
+#' @param predicted, Matrix of predicted values
+#' @param actual, Matrix of actual values
+#' @param model, Integer signifying which model to assess
+#' @return Root Mean Squared Error of the model
+
+RMSE <- function (predicted, actual, model) {
+  error <- abs(predicted[, model] - actual)
+  return(sqrt(mean(error^2, na.rm = TRUE)))
 }
 
-for (i in (length(predict3) + 1):length(predictALL[, 3])) {
-  predictALL[i, 3] <- NA
+#' MAD
+#' 
+#' This function evaluates the fit of a model by calculating the Median Absolute Deviation
+#' @param predicted, Matrix of predicted values
+#' @param actual, Matrix of actual values
+#' @param model, Integer signifying which model to assess
+#' @return Median Absolute Deviation of the model
+
+MAD <- function (predicted, actual, model) {
+  error <- abs(predicted[, model] - actual)
+  return(median(error, na.rm = TRUE))
+}
+
+#' RMSLE
+#' 
+#' This function evaluates the fit of a model by calculating the Root Mean Squared Logarithmic Error
+#' @param predicted, Matrix of predicted values
+#' @param actual, Matrix of actual values
+#' @param model, Integer signifying which model to assess
+#' @return Root Mean Squared Logarithmic Error of the model
+
+RMSLE <- function (predicted, actual, model) {
+  a <- log(predicted[, model] + 1) - log(actual + 1)
+  return(sqrt(mean(a^2, na.rm = TRUE)))
+}
+
+#' MAPE
+#' 
+#' This function evaluates the fit of a model by calculating the Mean Absolute Percentage Error
+#' @param predicted, Matrix of predicted values
+#' @param actual, Matrix of actual values
+#' @param model, Integer signifying which model to assess
+#' @return Mean Absolute Percentage Error of the model
+
+MAPE <- function (predicted, actual, model) {
+  error <- abs(predicted[, model] - actual)
+  percent.error <- error/actual * 100  ## some values of actual are 0, therefore error/actual = Inf in those cases
+  return(mean(percent.error[percent.error != Inf], na.rm = TRUE)) ## removes said values from the MAPE calculation
+}
+
+#' MEAPE
+#' 
+#' This function evaluates the fit of a model by calculating the Median Absolute Percentage Error
+#' @param predicted, Matrix of predicted values
+#' @param actual, Matrix of actual values
+#' @param model, Integer signifying which model to assess
+#' @return Median Absolute Percentage Error of the model
+
+MEAPE <- function (predicted, actual, model) {
+  error <- abs(predicted[, model] - actual)
+  percent.error <- error/actual * 100  ## some values of actual are 0, therefore error/actual = Inf in those cases
+  return(median(percent.error[percent.error != Inf], na.rm = TRUE)) ## removes said values from the MAPE calculation
+}
+
+## Master Function (special thanks to Matt Malis whose code showed me how to do this properly)
+
+#' FitStatistics
+#' 
+#' This function caluculates RMSE, MAD, RMSLE, MAPE, and/or MEAPE depending on user input
+#' @param predicted, matrix of predicted values
+#' @param actual, matrix of actual values
+#' @params calcRMSE, calcMAD, calcRMSLE, calcMAPE, calcMEAPE: boolean of whether to calculate each of these statistics
+#'        (default to FALSE for all)
+#' @return matrix of fit statistics, calculated for the predicted values from existing models
+
+FitStatistics <- function(predicted, actual, calcRMSE = FALSE, 
+                                             calcMAD = FALSE, 
+                                             calcRMSLE = FALSE, 
+                                             calcMAPE = FALSE, 
+                                             calcMEAPE = FALSE) {
+  statValues <- matrix(nrow = 3)
+  statNames <- c()
+  if (calcRMSE) {
+    statRMSE <- sapply(1:dim(predicted)[2], function(x) RMSE(predicted, actual, x))
+    statValues <- cbind(statValues, (statRMSE))
+    statNames <- c(statNames, "RMSE")
+  }
+  if (calcMAD) {
+    statMAD <- sapply(1:dim(predicted)[2], function(x) MAD(predicted, actual, x))
+    statValues <- cbind(statValues, (statMAD))
+    statNames <- c(statNames, "MAD")
+  }
+  if (calcRMSLE) {
+    statRMSLE <- sapply(1:dim(predicted)[2], function(x) RMSLE(predicted, actual, x))
+    statValues <- cbind(statValues, (statRMSLE))
+    statNames <- c(statNames, "RMSLE")
+  }
+  if (calcMAPE) {
+    statMAPE <- sapply(1:dim(predicted)[2], function(x) MAPE(predicted, actual, x))
+    statValues <- cbind(statValues, (statMAPE))
+    statNames <- c(statNames, "MAPE")
+  }
+  if (calcMEAPE) {
+    statMEAPE <- sapply(1:dim(predicted)[2], function(x) MEAPE(predicted, actual, x))
+    statValues <- cbind(statValues, statMEAPE)
+    statNames <- c(statNames, "MEAPE")
+  }
+  statValues <- statValues[, -1]
+  colnames(statValues) <- statNames # unfortunately this crashes the code if you only select one statistic
+  rownames(statValues) <- c("Model1", "Model2", "Model3") # unfortunately this crashes the code if you only select one statistic
+  return(statValues)
 }
 
 
 
-#sapply((length(predict1) + 1):length(predictALL[, 1]), function(i) predictALL[i, 1] <- NA)
+### Question 5
 
+# Runs FitStatistics using all of the statistics to evaluate the accuracy of the models
+FitStatistics(predictALL, therm.Obama, calcRMSE = TRUE, calcMAD = TRUE, calcRMSLE = TRUE, calcMAPE = TRUE, calcMEAPE = TRUE)
 
+# Runs FitStatistics using RMSE to evaluate the accuracy of the models
+FitStatistics(predictALL, therm.Obama, calcRMSE = TRUE) # crashes
 
-
-
-
-
-
-## Jonathan's Code:
-
-## model Obama's feeling thermometer score as function
-## of Clinton's feeling thermometer score
-model1 <- lm(ft_dpc ~ ft_hclinton, anes)
-
-## make a prediction for a single observation with
-## hypothetical clinton score of 77
-predict(model1, data.frame(ft_hclinton=77))
-## we would expect a Obama score of 71.7
-
-
-## Question 1
-## randomly subset the data into two partitions
-## use "training set" to build at least three models 
-## of Obama's feeling thermometer score
-## document carefully how you deal with missingness
